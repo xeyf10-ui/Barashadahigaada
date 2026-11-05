@@ -1,0 +1,679 @@
+<!doctype html>
+<html lang="fi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<title>Ammukset – elävä kirja</title>
+<style>
+:root{
+  --paper:#f5e9cc;--paper2:#ecdcb6;--paperHi:#fbf3dc;--ink:#3b2f26;--ink2:#6d5d4c;
+  --desk1:#80593b;--desk2:#4f3524;--cover:#6e2a26;--cover2:#45171a;--edge1:#efe0b9;--edge2:#cbb687;
+  --ui:#fff7e6;--uiT:#33281f;--line:rgba(60,40,20,.28);--note:#fff0a0;--noteT:#4a3b10;--pp:#fbf3dc;--hw:#27479a;
+  --hand:"Segoe Script","Bradley Hand","Chalkboard SE","Comic Sans MS","Noteworthy",cursive;
+}
+:root[data-theme=dark]{
+  --paper:#3a3228;--paper2:#322b22;--paperHi:#493e31;--ink:#eadcc2;--ink2:#b9a88e;
+  --desk1:#2b2018;--desk2:#17110c;--cover:#3a1816;--cover2:#240e0d;--edge1:#5d503d;--edge2:#3e3429;
+  --ui:#2c241c;--uiT:#f1e5cf;--line:rgba(255,240,210,.25);--note:#5b5226;--noteT:#fff0b8;--pp:#493e31;--hw:#9db9ff;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden;color:var(--uiT);font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-tap-highlight-color:transparent}
+body{background:radial-gradient(120% 90% at 50% 25%,var(--desk1),var(--desk2));position:relative}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.22;
+  background:repeating-linear-gradient(94deg,rgba(0,0,0,.35) 0 2px,transparent 2px 9px,rgba(255,255,255,.07) 9px 10px,transparent 10px 23px)}
+.app{position:relative;height:100vh;height:100dvh;display:flex;flex-direction:column;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+.bar{flex:none;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 10px;min-height:48px}
+.ttl{min-width:0;color:#fff4de;text-shadow:0 1px 2px rgba(0,0,0,.6)}
+.ttl b{font-size:15px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ttl span{display:block;font-size:11px;opacity:.85;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tools{display:flex;gap:6px;flex:none}
+.tb{min-height:38px;min-width:38px;padding:0 12px;border-radius:19px;border:1px solid var(--line);background:var(--ui);color:var(--uiT);font:600 13px/1 inherit;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:6px;box-shadow:0 2px 5px rgba(0,0,0,.35)}
+.tb svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.tb[aria-pressed=true]{background:#e0a93c;color:#2b1d08;border-color:transparent}
+.tb:focus-visible,.nb:focus-visible,.dot:focus-visible,.btn:focus-visible,.opt:focus-visible,.flap:focus-visible{outline:3px solid #ffd35c;outline-offset:2px}
+.area{flex:1;min-height:0;display:grid;place-items:center;perspective:2600px;perspective-origin:50% 20%;position:relative}
+.nav{flex:none;display:flex;justify-content:center;align-items:center;gap:14px;padding:6px 10px 8px;min-height:54px}
+.nb{width:52px;height:42px;border-radius:21px;border:1px solid var(--line);background:var(--ui);color:var(--uiT);cursor:pointer;display:grid;place-items:center;box-shadow:0 2px 5px rgba(0,0,0,.35)}
+.nb svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
+.nb:disabled{opacity:.35;cursor:default}
+.dots{display:flex;gap:8px;align-items:center}
+.dot{width:26px;height:26px;border-radius:50%;border:2px solid rgba(255,255,255,.55);background:var(--c);cursor:pointer;padding:0;color:#fff;font:700 12px/1 system-ui;display:grid;place-items:center;opacity:.8;transition:transform .25s,opacity .25s}
+.dot.act{transform:scale(1.28);opacity:1;border-color:#fff;box-shadow:0 0 0 2px rgba(0,0,0,.35)}
+
+/* ---------- kirja ---------- */
+.book{position:relative;width:var(--bw,900px);height:var(--bh,600px);font-size:var(--fs,15px);transform:rotateX(16deg);transform-origin:50% 100%;transform-style:preserve-3d;touch-action:pan-y;user-select:none;-webkit-user-select:none}
+.book.wideflat{transform:rotateX(12deg)}
+.cover{position:absolute;inset:-.75em -.85em -1.05em;border-radius:.7em;background:linear-gradient(135deg,var(--cover),var(--cover2));box-shadow:0 1.6em 2.2em rgba(0,0,0,.55),0 .3em .6em rgba(0,0,0,.5),inset 0 0 0 .12em rgba(255,255,255,.08);transform:translateZ(-3px)}
+.stk{position:absolute;top:.25em;bottom:-.35em;background:repeating-linear-gradient(90deg,var(--edge1) 0 1px,var(--edge2) 1px 3px);transform:translateZ(-1px);box-shadow:0 .35em .5em rgba(0,0,0,.35)}
+.stk.l{right:50%;width:calc(var(--tl,10px) + 50%);border-radius:.3em 0 0 .3em;margin-right:0}
+.stk.r{left:50%;width:calc(var(--tr,10px) + 50%);border-radius:0 .3em .3em 0}
+.book.sg .stk.l{display:none}.book.sg .stk.r{left:0;width:100%}
+.stk.b{left:0;right:0;top:auto;bottom:-.7em;height:.9em;width:auto;background:repeating-linear-gradient(0deg,var(--edge1) 0 1px,var(--edge2) 1px 3px);border-radius:0 0 .3em .3em}
+
+.pages{position:absolute;inset:0;display:grid;grid-template-rows:100%;transform-style:flat}
+.pages.double{grid-template-columns:1fr 1fr}
+.pages.single{grid-template-columns:1fr}
+.page{grid-row:1;position:relative;min-width:0;min-height:0;display:none;color:var(--ink);overflow:hidden;border-top:.38em solid var(--c);
+  background:radial-gradient(rgba(120,90,40,.07) 1px,transparent 1.3px) 0 0/7px 7px,linear-gradient(180deg,var(--paperHi),var(--paper) 45%,var(--paper2))}
+.page.on{display:block}
+.pages.double .page.l{grid-column:1;border-radius:.4em 0 0 0}
+.pages.double .page.r{grid-column:2;border-radius:0 .4em 0 0}
+.pages.single .page{grid-column:1;border-radius:.4em .4em 0 0}
+.page::after{content:"";position:absolute;top:0;bottom:0;width:3.4em;pointer-events:none;z-index:5}
+.pages.double .page.l::after{right:0;background:linear-gradient(90deg,transparent,rgba(40,20,0,.28))}
+.pages.double .page.r::after{left:0;background:linear-gradient(270deg,transparent,rgba(40,20,0,.28))}
+.page.snap{position:absolute;display:block!important;left:0;top:0}
+.pi{position:absolute;inset:0;padding:.9em 1.2em .9em;display:flex;flex-direction:column;gap:.45em;overflow-y:auto;overflow-x:hidden;scrollbar-width:thin}
+.pages.double .page.l .pi{padding-right:2.3em}
+.pages.double .page.r .pi{padding-left:2.3em}
+.kick{font:700 .68em/1 system-ui;letter-spacing:.14em;text-transform:uppercase;color:var(--c);flex:none}
+h2{margin:0;font:700 1.55em/1.08 Georgia,"Times New Roman",serif;color:var(--c);flex:none}
+.pi p{margin:0;font:1em/1.5 Georgia,"Times New Roman",serif;flex:none}
+.curio{flex:none;background:var(--cs);border:2px dashed var(--c);border-radius:.5em;padding:.6em .8em;font:1em/1.45 Georgia,serif}
+.curio b{color:var(--c)}
+.law{flex:none;background:var(--cs);border-left:.3em solid var(--c);padding:.5em .75em .6em;border-radius:.2em .45em .45em .2em}
+.law .lw{display:block;font:700 .62em/1 system-ui;letter-spacing:.16em;text-transform:uppercase;color:var(--c);margin-bottom:.35em}
+.law .fm{display:block;font:italic 1.06em/1.55 Georgia,serif}
+.law sub{font-size:.7em;line-height:0}
+.pi p sub,.eq sub,.chip sub,.pq sub,.ans sub,.sn sub{font-size:.7em;line-height:0}
+.err{flex:none;font:.9em/1.4 Georgia,serif;color:var(--ink2);border:1px solid var(--line);border-radius:.4em;padding:.4em .6em}
+.err s{color:#b0413e;text-decoration-thickness:2px}
+.legend{flex:none;display:flex;gap:.5em;flex-wrap:wrap;font:.88em/1.3 Georgia,serif}
+.legend span{background:var(--cs);border-radius:1em;padding:.15em .6em}
+.note{flex:none;align-self:flex-end;max-width:84%;margin-top:auto;font:1.02em/1.3 var(--hand);color:var(--hw);transform:rotate(-2deg);position:relative;padding:.55em .75em;background:var(--note);box-shadow:.1em .2em .45em rgba(0,0,0,.28)}
+.note::before{content:"";position:absolute;left:50%;top:-.6em;width:3.2em;height:1.1em;margin-left:-1.6em;background:rgba(255,255,255,.45);transform:rotate(3deg);box-shadow:0 0 .2em rgba(0,0,0,.2)}
+.foot{flex:none;font:.68em/1 system-ui;opacity:.55;text-align:center}
+
+/* laboratorio */
+.lh{flex:none;display:flex;align-items:baseline;gap:.55em;grid-area:h}
+.lh .tag{font:700 .68em/1 system-ui;letter-spacing:.14em;text-transform:uppercase;color:var(--c)}
+.lh h3{margin:0;font:700 1.15em/1.1 Georgia,serif}
+.pred{flex:none;grid-area:p;background:var(--note);color:var(--noteT);padding:.5em .7em .55em;border-radius:.25em;box-shadow:.05em .15em .4em rgba(0,0,0,.28);transform:rotate(-.4deg)}
+.pq{font:.84em/1.28 Georgia,serif}.pq b{font:700 1em var(--hand)}
+.opts{display:flex;flex-wrap:wrap;gap:.3em;margin:.3em 0 .25em}
+.opt{min-height:2em;border:1px solid rgba(0,0,0,.32);background:rgba(255,255,255,.55);border-radius:1.1em;padding:0 .8em;font:inherit;font-size:.8em;color:#3b2f10;cursor:pointer}
+.opt.sel{background:var(--c);color:#fff;border-color:transparent;font-weight:700}
+.reveal{position:relative;perspective:40em;min-height:2.6em;border-top:1px dashed rgba(0,0,0,.35);padding-top:.3em;cursor:default}
+.ans{font:.8em/1.28 Georgia,serif;padding:.2em .1em}
+.ans .vd{display:block;font-weight:700;margin-bottom:.1em}
+.flap{position:absolute;left:0;right:0;top:.3em;bottom:0;background:linear-gradient(#f4b877,#e69b4d);color:#4a2a08;display:grid;place-items:center;font:700 .84em/1.2 system-ui;text-align:center;padding:0 .4em;border-radius:.2em;transform-origin:50% 0;transform:rotateX(calc(var(--lift,0)*-1deg));backface-visibility:hidden;box-shadow:0 .25em .5em rgba(0,0,0,.4);cursor:pointer;touch-action:none;transition:transform .55s cubic-bezier(.3,1.35,.5,1)}
+.flap.drag{transition:none}
+.flap.dis{filter:saturate(.35);opacity:.88}
+.flap.shake{animation:shake .4s}
+@keyframes shake{25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+.popup{position:relative;flex:1 1 0;min-height:11em;grid-area:s;perspective:80em;perspective-origin:50% 30%;margin:.15em 0 .1em}
+.floor{position:absolute;left:0;right:0;bottom:0;height:52%;transform-style:preserve-3d;transform-origin:50% 100%;transform:rotateX(38deg)}
+.floor::before{content:"";position:absolute;left:2%;right:2%;bottom:6%;height:22%;background:radial-gradient(closest-side,rgba(40,20,0,.4),transparent);opacity:var(--o,0);filter:blur(2px)}
+.pn{position:absolute;transform-origin:50% 100%;transform:rotateX(calc(var(--o,0)*var(--ph)*-1));background:var(--pp);box-shadow:0 0 0 1px rgba(60,40,10,.3),.2em .3em .7em rgba(0,0,0,.28)}
+.pn canvas{position:absolute;display:block}
+.pn.back{left:5%;width:90%;bottom:66%;height:140%;--ph:50deg;background:var(--pp)}
+.pn.back canvas{inset:0;width:100%;height:100%}
+.pn.back::after{content:"";position:absolute;inset:0;background:linear-gradient(0deg,rgba(40,20,0,.38),rgba(40,20,0,0) 45%);pointer-events:none}
+.pn.main{left:1%;width:98%;bottom:10%;height:150%;--ph:62deg;clip-path:polygon(0 4%,9% 1.5%,22% 3.5%,38% 0,55% 2.8%,72% 0.8%,88% 3.5%,100% 1%,100% 100%,0 100%)}
+.pn.main canvas{left:0;top:5%;width:100%;height:95%}
+.pn.main::after{content:"";position:absolute;left:0;right:0;bottom:0;height:7%;background:linear-gradient(0deg,rgba(60,35,0,.3),transparent);pointer-events:none}
+.pn.front{left:0;width:100%;bottom:-3%;height:34%;--ph:78deg;background:transparent;box-shadow:none}
+.pn.front canvas{inset:0;width:100%;height:100%}
+.rd{flex:none;grid-area:r;display:grid;gap:.28em}
+.eq{font:.76em/1.32 Georgia,serif;background:var(--cs);border-radius:.3em;padding:.15em .5em}
+.eq b{color:var(--c)}
+.chips{display:grid;grid-template-columns:repeat(auto-fit,minmax(5.4em,1fr));gap:.3em}
+.chip{background:rgba(120,90,50,.13);border-radius:.3em;padding:.2em .45em;font-size:.8em;line-height:1.2;min-width:0}
+.chip>span{display:block;opacity:.72;font-size:.82em;white-space:nowrap}
+.chip b{font:700 1.08em Georgia,serif;white-space:nowrap}
+.ctrls{flex:none;grid-area:c;display:grid;gap:.1em;position:relative}
+.sl{display:grid;grid-template-columns:6.6em minmax(0,1fr) 4.6em;align-items:center;gap:.5em;min-height:2em;font-size:.88em}
+.sl .sn{font:1em Georgia,serif}
+.sl output{text-align:right;font:700 1em Georgia,serif;color:var(--c);white-space:nowrap}
+.sl input{width:100%;margin:0;height:1.9em;accent-color:var(--c);touch-action:pan-y}
+.btns{display:flex;flex-wrap:wrap;gap:.4em;margin-top:.15em}
+.btn{min-height:2.1em;padding:0 .95em;border-radius:1.2em;border:1.5px solid var(--c);background:transparent;color:var(--ink);font:600 .88em system-ui;cursor:pointer}
+.btn.pri{background:var(--c);color:#fff}
+.btn:disabled{opacity:.45;cursor:default}
+.ctrls .lockmsg{display:none}
+.ctrls.locked .sl,.ctrls.locked .btns{opacity:.3;pointer-events:none}
+.ctrls.locked .lockmsg{display:grid;position:absolute;inset:0;place-items:center;font:1.05em var(--hand);color:var(--hw);text-align:center}
+.over{position:absolute;left:0;right:0;pointer-events:none}
+
+/* leveä asettelu (puhelin vaaka / opettajatila) */
+.book.wide .lab .pi{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);grid-template-rows:auto auto auto 1fr;grid-template-areas:"h s" "p s" "r s" "c s";column-gap:1.1em;row-gap:.45em;align-content:start}
+.book.wide .lab .popup{align-self:stretch;min-height:0}
+.book.wide .lab .ctrls{align-self:start}
+.book.wide .pages.double .page.r .pi,.book.wide .pages.single .page.r .pi{padding-left:1.25em}
+
+/* opettajatila */
+.teach .txt,.teach .note{display:none}
+.teach .ctrls.locked .sl,.teach .ctrls.locked .btns{opacity:1;pointer-events:auto}
+.teach .ctrls.locked .lockmsg{display:none}
+.teach .eq{font-size:.95em}.teach .chip{font-size:.95em}
+.teach .pred{font-size:.95em}
+
+/* kuvakaappaus lehteen: malli painuu litteäksi sivun kääntyessä */
+.snap .popup{perspective:none}
+.snap .floor{inset:0;height:auto;transform:none;transform-style:flat}
+.snap .floor::before{display:none}
+.snap .pn{transform:none!important;box-shadow:0 0 0 1px rgba(60,40,10,.3)}
+.snap .pn.back{left:5%;width:90%;top:3%;bottom:auto;height:36%}
+.snap .pn.main{left:1%;width:98%;top:auto;bottom:1%;height:70%;clip-path:none}
+.snap .pn.main canvas{top:0;height:100%}
+.snap .pn.front{display:none}
+/* kääntyvä sivu */
+.leaf{position:absolute;pointer-events:none;transform-style:preserve-3d;z-index:20;transform:translateZ(.6px)}
+.strip{position:absolute;top:0;height:100%;transform-style:preserve-3d;transform-origin:0 50%}
+.face{position:absolute;inset:0;overflow:hidden;backface-visibility:hidden;background:var(--paper)}
+.face.fb{transform:rotateY(180deg)}
+.face .sc{position:absolute;top:0}
+.face .sd{position:absolute;inset:0;background:#2a1600;opacity:0}
+.lsh{position:absolute;pointer-events:none;z-index:19;opacity:0;top:0;bottom:0}
+.curl{position:absolute;inset:0;pointer-events:none}
+
+@media (prefers-reduced-motion:reduce){.flap{transition:none}}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <div class="bar">
+    <div class="ttl"><b>Ammukset – elävä kirja</b><span>Fysiikka · 10. luokka · s. 100–108 · Kuwaitin opetussuunnitelma</span></div>
+    <div class="tools">
+      <button class="tb" id="bTeach" aria-pressed="false" title="Opettajatila: suurempi malli, selitykset piiloon"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="12" rx="1.5"/><path d="M8 20h8M12 16v4"/></svg><span>Opettajatila</span></button>
+      <button class="tb" id="bMute" aria-label="Mykistä äänet" title="Mykistä / äänet päälle"></button>
+      <button class="tb" id="bTheme" aria-label="Vaihda tumma / vaalea tila" title="Tumma / vaalea tila"><svg viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg></button>
+    </div>
+  </div>
+  <div class="area" id="area">
+    <div class="book" id="book">
+      <div class="cover"></div>
+      <div class="stk l"></div><div class="stk r"></div><div class="stk b"></div>
+      <div class="pages double" id="pages"></div>
+    </div>
+  </div>
+  <div class="nav">
+    <button class="nb" id="bPrev" aria-label="Edellinen sivu"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
+    <div class="dots" id="dots"></div>
+    <button class="nb" id="bNext" aria-label="Seuraava sivu"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button>
+  </div>
+</div>
+
+<script>
+(()=>{
+'use strict';
+const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
+const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
+const G=9.8, D=Math.PI/180;
+const f=(x,d=1)=>{let s=(+x).toFixed(d);if(/^-0(\.0+)?$/.test(s))s=s.slice(1);return s.replace('.',',')};
+
+/* ================= FYSIIKKA (vain oppitunnin kaavat) ================= */
+const P={
+  comp:(v,a)=>({x:v*Math.cos(a*D),y:v*Math.sin(a*D)}),   // vx = v0 cos θ, v0y = v0 sin θ
+  fall:h=>Math.sqrt(2*h/G),                               // h = ½ g t²
+  top:vy=>vy/G,                                           // nousuaika
+  flight:vy=>2*vy/G,                                      // T = 2 v0y / g
+  height:vy=>vy*vy/(2*G),                                 // H = v0y² / (2g)
+  range:(vx,T)=>vx*T,                                     // R = vx · T
+  x:(vx,t)=>vx*t,
+  y:(vy,t,h0=0)=>h0+vy*t-.5*G*t*t,
+  vy:(vy,t)=>vy-G*t
+};
+
+/* ================= SISÄLTÖ ================= */
+const CH=[
+ {c:'#c8862a',cs:'rgba(200,134,42,.16)',name:'Kaksi palloa'},
+ {c:'#2f8f8a',cs:'rgba(47,143,138,.15)',name:'Nopeuden komponentit'},
+ {c:'#c0504d',cs:'rgba(192,80,77,.14)',name:'Vaakanopeus ei pienene'},
+ {c:'#7a63c4',cs:'rgba(122,99,196,.15)',name:'Korkeus ja kantama'},
+ {c:'#4f9a55',cs:'rgba(79,154,85,.16)',name:'Haaste: osu maaliin!'}
+];
+const vx='v<sub>x</sub>', v0y='v<sub>0y</sub>', v0='v<sub>0</sub>';
+const LEFT=[
+`<div class="kick">Luku 1 · Kysymys</div><h2>Kaksi palloa</h2>
+ <div class="curio"><b>Mieti ensin:</b> Pudotat yhden pallon ja potkaiset toisen vaakasuoraan samalta korkeudelta samalla hetkellä. Kumpi osuu maahan ensin?</div>
+ <p class="txt">Ammus liikkuu kahteen suuntaan yhtä aikaa: vaaka- ja pystysuunnassa. Pystysuunnassa painovoima antaa kiihtyvyyden <b>g = 9,8 m/s²</b> alaspäin.</p>
+ <div class="law"><span class="lw">Laki</span><span class="fm">h = ½ g t² &nbsp;→&nbsp; t = √(2h / g)</span><span class="fm">x = ${vx} · t</span></div>
+ <p class="txt">Ilmanvastusta ei oteta huomioon.</p>
+ <div class="note">Vaakasuuntainen liike ja putoaminen eivät häiritse toisiaan!</div>`,
+`<div class="kick">Luku 2 · Komponentit</div><h2>Nopeuden komponentit</h2>
+ <p class="txt">Kun ammus lähtee kulmassa θ vaakatasoon nähden, sen alkunopeus ${v0} jaetaan vaaka- ja pystykomponenttiin. Komponentit saadaan suorakulmaisesta kolmiosta, jossa ${v0} on hypotenuusa.</p>
+ <div class="law"><span class="lw">Laki</span><span class="fm">${vx} = ${v0} cos θ</span><span class="fm">${v0y} = ${v0} sin θ</span></div>
+ <p class="txt">Kun kulma kasvaa, vaakakomponentti pienenee ja pystykomponentti kasvaa.</p>
+ <div class="note">Piirrä aina suorakulmainen kolmio ensin!</div>`,
+`<div class="kick">Luku 3 · Virhekäsitys</div><h2>Vaakanopeus ei pienene</h2>
+ <p class="txt">Vaakasuunnassa mikään ei muuta nopeutta, joten ${vx} pysyy vakiona koko lennon ajan. Pystysuunnassa painovoima muuttaa nopeutta 9,8 m/s joka sekunti.</p>
+ <div class="law"><span class="lw">Laki</span><span class="fm">${vx} = ${v0} cos θ (vakio)</span><span class="fm">x = ${vx} · t</span><span class="fm">v<sub>y</sub> = ${v0y} − g t</span></div>
+ <div class="err txt"><b>Yleinen virhe:</b> <s>“Vaakanopeus pienenee lennon aikana.”</s> Ei pidä paikkaansa!</div>
+ <div class="note">Huipulla v<sub>y</sub> = 0, mutta ${vx} ei ole nolla!</div>`,
+`<div class="kick">Luku 4 · Huippu ja kantama</div><h2>Suurin korkeus ja kantama</h2>
+ <p class="txt">Huipulla pystynopeus on nolla. Nousuun ja laskuun kuluu yhtä kauan, joten koko lentoaika on kaksinkertainen nousuaikaan verrattuna.</p>
+ <div class="law"><span class="lw">Laki</span><span class="fm">H = ${v0y}² / (2g)</span><span class="fm">T = 2 ${v0y} / g</span><span class="fm">R = ${vx} · T</span></div>
+ <p class="txt">R on vaakasuuntainen kantama: matka, jonka ammus kulkee ennen maahan osumista.</p>
+ <div class="note">Lähtö- ja osumakorkeus ovat samat.</div>`,
+`<div class="kick">Luku 5 · Haaste</div><h2>Osu maaliin!</h2>
+ <p class="txt">Valitse nopeus ja kulma, laske lentorata ja osu maaliin. Viidellä kierroksella voit kerätä enintään 15 tähteä.</p>
+ <div class="law"><span class="lw">Muista</span><span class="fm">${vx} = ${v0} cos θ &nbsp;·&nbsp; ${v0y} = ${v0} sin θ</span><span class="fm">T = 2 ${v0y} / g &nbsp;·&nbsp; R = ${vx} · T</span></div>
+ <div class="legend txt"><span>★★★ ≤ 1 m</span><span>★★ ≤ 3 m</span><span>★ ≤ 6 m</span></div>
+ <div class="note">Laske ensin R – kokeile sitten ampua!</div>`
+];
+const PRED=[
+ {q:'Pallo A pudotetaan ja pallo B potkaistaan vaakasuoraan samalta korkeudelta. Kumpi osuu maahan ensin?',o:['Pallo A','Pallo B','Yhtä aikaa'],a:2,e:'Yhtä aikaa. Pystysuunnan liike on sama, eikä vaakanopeus vaikuta putoamisaikaan.'},
+ {q:'Alkunopeus pysyy samana, mutta kulma kasvaa 30°:sta 60°:een. Mitä komponenteille tapahtuu?',o:['Molemmat kasvavat','vₓ pienenee, v₀y kasvaa','Molemmat pienenevät'],a:1,e:'vₓ = v₀ cos θ pienenee ja v₀y = v₀ sin θ kasvaa. Esim. v₀ = 20 m/s: 17,3 → 10,0 ja 10,0 → 17,3 m/s.'},
+ {q:'Ammus lentää kaaressa. Mitä vaakanopeudelle vₓ tapahtuu lennon aikana?',o:['Pienenee koko ajan','Pysyy samana','Kasvaa'],a:1,e:'Pysyy samana! Vaakasuunnassa ei ole kiihtyvyyttä. Vain pystynopeus muuttuu.'},
+ {q:'Alkunopeus on 20 m/s. Millä kulmalla kantama on suurin?',o:['30°','45°','60°'],a:1,e:'45°: R ≈ 40,8 m. Kulmilla 30° ja 60° kantama on vain ≈ 35,4 m.'},
+ {q:'Kulma pidetään samana ja alkunopeutta kasvatetaan. Mitä kantamalle tapahtuu?',o:['Kasvaa','Pysyy samana','Pienenee'],a:0,e:'Kasvaa: molemmat komponentit kasvavat, joten lentoaika T ja vaakanopeus vₓ kasvavat.'}
+];
+
+/* ================= PIIRTOAPUJA (lyijykynätyyli) ================= */
+let INK='#3b2f26',ACC='#c8862a',SEED=1,PAPER='#fbf3dc';
+const HAND='"Segoe Script","Bradley Hand","Chalkboard SE","Comic Sans MS",cursive';
+const HZ='#2f6db5',VT='#c0504d';
+function hash(n){n=Math.imul(n^61,0x45d9f3b)^(n>>>15);n=Math.imul(n^(n>>>13),0x45d9f3b);return ((n^(n>>>16))>>>0)/4294967296}
+const jr=i=>hash(SEED*977+i*31+7)-.5;
+function pLine(c,x1,y1,x2,y2,o={}){
+  const n=o.passes||2,j=o.j??1.1;c.save();c.lineCap='round';c.lineJoin='round';c.strokeStyle=o.col||INK;c.lineWidth=o.lw||1.4;c.globalAlpha=o.a??.85;if(o.dash)c.setLineDash(o.dash);
+  const dx=x2-x1,dy=y2-y1,len=Math.hypot(dx,dy),segs=Math.max(1,Math.floor(len/22));
+  for(let k=0;k<n;k++){c.beginPath();const s=k*53;c.moveTo(x1+jr(s)*j*2,y1+jr(s+1)*j*2);
+    for(let i=1;i<=segs;i++){const t=i/segs;c.lineTo(x1+dx*t+jr(s+i*2+2)*j*2,y1+dy*t+jr(s+i*2+3)*j*2)}c.stroke()}
+  c.restore()}
+function pPoly(c,pts,o={}){c.save();c.lineCap='round';c.lineJoin='round';c.strokeStyle=o.col||INK;c.lineWidth=o.lw||1.5;c.globalAlpha=o.a??.85;if(o.dash)c.setLineDash(o.dash);
+  const j=o.j??.6;for(let k=0;k<(o.passes||2);k++){c.beginPath();pts.forEach((p,i)=>{const x=p[0]+jr(i*2+k*97)*j*2,y=p[1]+jr(i*2+1+k*97)*j*2;i?c.lineTo(x,y):c.moveTo(x,y)});c.stroke()}c.restore()}
+function pCircle(c,x,y,r,o={}){c.save();c.strokeStyle=o.col||INK;c.lineWidth=o.lw||1.4;c.globalAlpha=o.a??.85;c.lineCap='round';
+  const n=22;for(let p=0;p<(o.passes||2);p++){c.beginPath();const ph=p*.8;for(let i=0;i<=n+1;i++){const a=ph+i/n*Math.PI*2,rr=r*(1+jr(i+p*40)*.07);const px=x+Math.cos(a)*rr,py=y+Math.sin(a)*rr;i?c.lineTo(px,py):c.moveTo(px,py)}c.stroke()}c.restore()}
+function pArrow(c,x1,y1,x2,y2,col,lw=2.2){const dx=x2-x1,dy=y2-y1,L=Math.hypot(dx,dy);if(L<3)return;pLine(c,x1,y1,x2,y2,{col,lw,j:.7});
+  const a=Math.atan2(dy,dx),hl=Math.min(11,L*.5);for(const s of[-1,1])pLine(c,x2,y2,x2-hl*Math.cos(a+s*.42),y2-hl*Math.sin(a+s*.42),{col,lw,passes:1,j:.3})}
+function ball(c,x,y,r,col,alpha=1){c.save();c.globalAlpha=alpha;c.beginPath();c.arc(x,y,r,0,7);c.fillStyle=col;c.globalAlpha=.28*alpha;c.fill();c.globalAlpha=.75*alpha;c.clip();c.strokeStyle=col;c.lineWidth=1;
+  for(let k=-r*2;k<r*2;k+=3){c.beginPath();c.moveTo(x+k-r,y+r);c.lineTo(x+k+r,y-r);c.stroke()}c.restore();pCircle(c,x,y,r,{lw:1.6,a:.9*alpha,col:INK})}
+function txt(c,s,x,y,size,col,align='left',font=HAND){c.save();c.font=`${size}px ${font}`;c.fillStyle=col||INK;c.textAlign=align;c.textBaseline='alphabetic';c.fillText(s,x,y);c.restore()}
+function vt(c,b,sub,x,y,size,col,align='left'){c.save();c.font=`italic ${size}px Georgia,serif`;const w1=c.measureText(b).width;c.font=`${size*.72}px Georgia,serif`;const w2=c.measureText(sub).width;const tot=w1+w2;
+  const x0=align==='center'?x-tot/2:align==='right'?x-tot:x;c.fillStyle=col||INK;c.textBaseline='alphabetic';c.textAlign='left';c.font=`italic ${size}px Georgia,serif`;c.fillText(b,x0,y);c.font=`${size*.72}px Georgia,serif`;c.fillText(sub,x0+w1,y+size*.24);c.restore();return tot}
+function rgba(h,a){const n=parseInt(h.slice(1),16);return`rgba(${n>>16},${n>>8&255},${n&255},${a})`}
+function nice(v){for(const n of[10,15,20,25,30,40,50,60,80,100,120,150,200])if(v<=n)return n;return Math.ceil(v/50)*50}
+function view(w,h,xmin,xmax,ymax,pl,pr,pt,pb){const s=Math.min((w-pl-pr)/(xmax-xmin),(h-pt-pb)/ymax);const ox=(w-pl-pr-(xmax-xmin)*s)/2;return{s,w,h,X:x=>pl+ox+(x-xmin)*s,Y:y=>h-pb-y*s}}
+function ground(c,V,x0,x1,step,labels=true){const y=V.Y(0);SEED=3;pLine(c,V.X(x0),y,V.X(x1),y,{lw:2.2});
+  for(let px=V.X(x0);px<V.X(x1);px+=9)pLine(c,px+7,y+1,px,y+9,{lw:1,a:.35,passes:1,j:.5});
+  if(labels)for(let x=0;x<=x1+1e-6;x+=step){const px=V.X(x);pLine(c,px,y-3,px,y+5,{lw:1.2,passes:1});txt(c,String(x),px,y+21,11,INK,'center','Georgia,serif')}}
+function dots(c,pts,every,r,col){let acc=0;c.save();c.fillStyle=col;c.globalAlpha=.85;for(let i=1;i<pts.length;i++){acc+=Math.hypot(pts[i][0]-pts[i-1][0],pts[i][1]-pts[i-1][1]);if(acc>=every){acc=0;c.beginPath();c.arc(pts[i][0],pts[i][1],r,0,7);c.fill()}}c.restore()}
+function trajPts(V,vx_,vy_,T,h0=0,n=60){const a=[];for(let i=0;i<=n;i++){const t=T*i/n;a.push([V.X(vx_*t),V.Y(Math.max(0,P.y(vy_,t,h0)))])}return a}
+function fit(cv){const w=cv.clientWidth,h=cv.clientHeight;if(!w||!h)return null;const d=Math.min(2,window.devicePixelRatio||1);
+  if(cv.width!==Math.round(w*d)||cv.height!==Math.round(h*d)){cv.width=Math.round(w*d);cv.height=Math.round(h*d)}
+  const c=cv.getContext('2d');c.setTransform(d,0,0,d,0,0);return{c,w,h}}
+
+/* ================= LABORATORIOT ================= */
+const sl=(k,label,min,max,step,val,unit)=>`<label class="sl"><span class="sn">${label}</span><input type="range" data-k="${k}" min="${min}" max="${max}" step="${step}" value="${val}" aria-label="${label.replace(/<[^>]+>/g,'')}"><output data-o="${k}" data-u="${unit}" data-d="${step<1?(step<.1?2:1):0}"></output></label>`;
+const chip=(id,l)=>`<div class="chip"><span>${l}</span><b data-e="${id}">–</b></div>`;
+const eq=id=>`<div class="eq" data-e="${id}"></div>`;
+const btn=(a,l,cls='')=>`<button class="btn ${cls}" data-a="${a}">${l}</button>`;
+const labs=[];
+const dirty=[1,1,1,1,1];
+const setE=(i,k,h)=>{const e=$(`[data-e="${k}"]`,PR[i]);if(e&&e.innerHTML!==h)e.innerHTML=h};
+
+/* ---------- 1: Kaksi palloa ---------- */
+labs[0]=(()=>{
+  const st={h:20,v:10,t:0,play:false};
+  return{st,
+  rd:()=>eq('e1')+`<div class="chips">${chip('t','aika t')}${chip('ya','A: korkeus')}${chip('yb','B: korkeus')}${chip('xb','B: matka x')}</div>`,
+  ctrl:()=>sl('h','Korkeus h',5,45,1,20,'m')+sl('v','Vaakanopeus '+vx,0,25,1,10,'m/s')+sl('t','Aika t',0,2.02,.01,0,'s')+`<div class="btns">${btn('go','▶ Laukaise','pri')}${btn('rs','↺ Alkuun')}</div>`,
+  onchange(k){const T=P.fall(st.h);if(k==='h'){const t=$('[data-k=t]',PR[0]);t.max=T.toFixed(2)}st.t=Math.min(st.t,P.fall(st.h));st.play=false},
+  act(a){const T=P.fall(st.h);if(a==='go'){st.t=0;st.play=true}if(a==='rs'){st.t=0;st.play=false}},
+  tick(dt){if(!st.play)return false;const T=P.fall(st.h);st.t=Math.min(T,st.t+dt*.7);if(st.t>=T)st.play=false;return true},
+  upd(){const T=P.fall(st.h),t=clamp(st.t,0,T),y=Math.max(0,P.y(0,t,st.h));
+    setE(0,'e1',`Putoamisaika: <i>T</i> = √(2·<i>h</i> / <i>g</i>) = √(2·${st.h} / 9,8) = <b>${f(T,2)} s</b> – molemmille palloille${t>=T-1e-9?' <b>✓ osuvat yhtä aikaa</b>':''}`);
+    setE(0,'t',f(t,2)+' s');setE(0,'ya',f(y,1)+' m');setE(0,'yb',f(y,1)+' m');setE(0,'xb',f(P.x(st.v,t),1)+' m')},
+  draw(c,w,h){const T=P.fall(st.h),t=clamp(st.t,0,T),X1=nice(Math.max(30,st.v*T+12)),V=view(w,h,-9,X1,st.h+7,8,8,12,28);ground(c,V,-9,X1,X1<=30?5:10);
+    const edge=1.5,gy=V.Y(0),cy=V.Y(st.h);SEED=11;
+    c.fillStyle=rgba(ACC,.12);c.fillRect(V.X(-9),cy,V.X(edge)-V.X(-9),gy-cy);
+    pPoly(c,[[V.X(-9),gy],[V.X(-9),cy],[V.X(edge),cy],[V.X(edge),gy]],{lw:1.8});
+    for(let y=cy+10;y<gy-4;y+=11)pLine(c,V.X(-9),y,V.X(-9)+Math.min(40,(V.X(edge)-V.X(-9))*.5),y-8,{lw:1,a:.3,passes:1});
+    const r=Math.max(5,1.3*V.s),yy=Y=>V.Y(Y)-r;
+    // vauhtikuvat
+    for(let tk=0;tk<=t+1e-9;tk+=.25){const ya=P.y(0,tk,st.h),xb=edge+P.x(st.v,tk);const al=.38;
+      pLine(c,V.X(edge),yy(ya),V.X(xb),yy(ya),{dash:[3,4],lw:1,a:.4,passes:1,col:ACC});
+      pCircle(c,V.X(edge),yy(ya),r,{col:VT,a:al,passes:1,lw:1.2});pCircle(c,V.X(xb),yy(ya),r,{col:ACC,a:al,passes:1,lw:1.2})}
+    const ya=Math.max(0,P.y(0,t,st.h)),xb=edge+P.x(st.v,t);
+    pPoly(c,trajPts(V,st.v,0,T,st.h,50).map(p=>[p[0]+V.X(edge)-V.X(0),p[1]-r]),{dash:[2,6],lw:1.2,a:.6,col:ACC,passes:1});
+    ball(c,V.X(edge),yy(ya),r,VT);ball(c,V.X(xb),yy(ya),r,ACC);
+    txt(c,'A',V.X(edge)-r-9,yy(ya)+5,15,VT,'center');txt(c,'B',V.X(xb)+r+10,yy(ya)+5,15,ACC,'center');
+    // korkeusmitta
+    const mx=V.X(-9)+6;pArrow(c,mx,gy-3,mx,cy+3,INK,1.2);pArrow(c,mx,cy+3,mx,gy-3,INK,1.2);txt(c,'h = '+st.h+' m',mx+6,(cy+gy)/2,13,INK,'left');
+    if(t>=T-1e-9){const lx=V.X(edge+st.v*T);pLine(c,lx-6,gy-6,lx+6,gy+6,{col:ACC,lw:2.4});pLine(c,lx-6,gy+6,lx+6,gy-6,{col:ACC,lw:2.4});
+      txt(c,'x = '+f(st.v*T,1)+' m',clamp(lx,40,w-40),gy-14,13,INK,'center')}
+    txt(c,'A: pudotetaan',V.X(edge)+r+4,V.Y(st.h)-r*2.4,12,VT);txt(c,'B: potkaistaan',V.X(edge)+r+4,V.Y(st.h)-r*2.4-14,12,ACC);
+  }}})();
+
+/* ---------- 2: Komponentit ---------- */
+labs[1]=(()=>{
+  const st={v:20,a:30};
+  return{st,
+  rd:()=>eq('e1')+eq('e2')+eq('e3'),
+  ctrl:()=>sl('v','Alkunopeus '+v0,5,40,1,20,'m/s')+sl('a','Kulma θ',0,90,1,30,'°')+`<div class="btns">${btn('a30','θ = 30°')}${btn('a45','θ = 45°')}${btn('a60','θ = 60°')}</div>`,
+  act(a){st.a=+a.slice(1)},
+  upd(){const c=P.comp(st.v,st.a);
+    setE(1,'e1',`${vx} = ${v0} cos θ = ${st.v} · cos ${st.a}° = <b>${f(c.x)} m/s</b>`);
+    setE(1,'e2',`${v0y} = ${v0} sin θ = ${st.v} · sin ${st.a}° = <b>${f(c.y)} m/s</b>`);
+    setE(1,'e3',`Tarkistus: √(${f(c.x)}² + ${f(c.y)}²) ≈ ${f(Math.hypot(c.x,c.y))} m/s = ${v0} ✓`)},
+  draw(c,w,h){const cp=P.comp(st.v,st.a),dm=Math.max(st.v,20)*1.18,s=Math.min((w-80)/dm,(h-58)/dm),ox=Math.min(40,w*.1),oy=h-34;SEED=21;
+    const X=x=>ox+x*s,Y=y=>oy-y*s,fs=clamp(w/28,11,16);
+    pArrow(c,ox-10,oy,ox+dm*s,oy,INK,1.4);pArrow(c,ox,oy+10,ox,oy-dm*s,INK,1.4);
+    const ex=X(cp.x),ey=Y(cp.y);
+    c.fillStyle=rgba(ACC,.14);c.beginPath();c.moveTo(ox,oy);c.lineTo(ex,oy);c.lineTo(ex,ey);c.closePath();c.fill();
+    pLine(c,ex,oy,ex,ey,{col:VT,dash:[6,4],lw:1.6,passes:1});pLine(c,ox,ey,ex,ey,{col:HZ,dash:[6,4],lw:1.6,passes:1});
+    const L=Math.min(7*s,60);pLine(c,ox,oy,ox+Math.cos(st.a*D)*L,oy-Math.sin(st.a*D)*L,{lw:8,col:INK,a:.22,passes:1,j:.3});
+    pArrow(c,ox,oy+0.01,ex,oy,HZ,3);pArrow(c,ox,oy,ox,ey,VT,3);pArrow(c,ox,oy,ex,ey,INK,3);
+    if(cp.x>4&&cp.y>4)pPoly(c,[[ex-10,oy],[ex-10,oy-10],[ex,oy-10]],{lw:1.2,passes:1});
+    const ar=Math.min(36,Math.hypot(ex-ox,oy-ey)*.4+8);c.save();c.strokeStyle=INK;c.lineWidth=1.3;c.beginPath();c.arc(ox,oy,ar,-st.a*D,0);c.stroke();c.restore();
+    txt(c,'θ='+st.a+'°',ox+ar+5,oy-6-(st.a>35?0:12),fs,INK,'left','Georgia,serif');
+    // v0 kyltti hypotenuusan viereen
+    const mx=(ox+ex)/2,my=(oy+ey)/2,nx=-(ey-oy),ny=(ex-ox),nl=Math.hypot(nx,ny)||1;
+    const lx=mx+(-Math.abs(nx)/nl)*0-8,ly=my-14;
+    let t0=vt(c,'v','0',mx-10,my-20,fs+1,INK,'right');txt(c,'= '+st.v+' m/s',mx-10,my-20,fs,INK,'left','Georgia,serif');
+    vt(c,'v','x',(ox+ex)/2,oy+20,fs,HZ,'right');txt(c,'= '+f(cp.x)+' m/s',(ox+ex)/2+1,oy+20,fs,HZ,'left','Georgia,serif');
+    vt(c,'v','0y',ex+8,(oy+ey)/2,fs,VT,'left');txt(c,'= '+f(cp.y)+' m/s',ex+8,(oy+ey)/2+fs+2,fs,VT,'left','Georgia,serif');
+  }}})();
+
+/* ---------- 3: Vaakanopeus ---------- */
+labs[2]=(()=>{
+  const st={v:20,a:60,t:0,play:false};
+  const Tof=()=>P.flight(P.comp(st.v,st.a).y);
+  return{st,
+  rd:()=>eq('e1')+eq('e2')+`<div class="chips">${chip('t','aika t')}${chip('x','matka x')}${chip('y','korkeus y')}${chip('vx','vaakanop. vₓ')}${chip('vy','pystynop. v<sub>y</sub>')}${chip('v','vauhti')}</div>`,
+  ctrl:()=>sl('v','Alkunopeus '+v0,10,30,1,20,'m/s')+sl('a','Kulma θ',20,80,1,60,'°')+sl('t','Aika t',0,3.54,.01,0,'s')+`<div class="btns">${btn('go','▶ Lennätä','pri')}${btn('rs','↺ Alkuun')}${btn('top','Huipulle')}</div>`,
+  onchange(k){if(k==='v'||k==='a'){$('[data-k=t]',PR[2]).max=Tof().toFixed(2);st.play=false}st.t=Math.min(st.t,Tof())},
+  act(a){if(a==='go'){if(st.t>=Tof()-1e-6)st.t=0;st.play=true}if(a==='rs'){st.t=0;st.play=false}if(a==='top'){st.t=P.top(P.comp(st.v,st.a).y);st.play=false}},
+  tick(dt){if(!st.play)return false;st.t=Math.min(Tof(),st.t+dt*.8);if(st.t>=Tof())st.play=false;return true},
+  upd(){const cp=P.comp(st.v,st.a),T=Tof(),t=clamp(st.t,0,T),vy=P.vy(cp.y,t);
+    setE(2,'e1',`${vx} = ${v0} cos θ = ${st.v} · cos ${st.a}° = <b>${f(cp.x)} m/s</b> – ei muutu koko lennon aikana`);
+    setE(2,'e2',`v<sub>y</sub> = ${v0y} − g·t = ${f(cp.y)} − 9,8 · ${f(t,2)} = <b>${f(vy)} m/s</b>`);
+    setE(2,'t',f(t,2)+' s');setE(2,'x',f(P.x(cp.x,t))+' m');setE(2,'y',f(Math.max(0,P.y(cp.y,t)))+' m');
+    setE(2,'vx',f(cp.x)+' m/s');setE(2,'vy',f(vy)+' m/s');setE(2,'v',f(Math.hypot(cp.x,vy))+' m/s')},
+  draw(c,w,h){const cp=P.comp(st.v,st.a),T=Tof(),t=clamp(st.t,0,T);SEED=31;
+    // v–t -kuvaaja (vasen osa)
+    const gw=w*.4,gx0=30,gx1=gw-4,gy0=16,gy1=h-24,vmax=Math.max(cp.x,cp.y)*1.12,vmin=-cp.y*1.12;
+    const GX=tt=>gx0+(gx1-gx0)*tt/T,GY=v=>gy0+(gy1-gy0)*(vmax-v)/(vmax-vmin);
+    pLine(c,gx0,GY(0),gx1,GY(0),{lw:1.2,passes:1});pLine(c,gx0,gy0-4,gx0,gy1+4,{lw:1.2,passes:1});
+    txt(c,'v (m/s)',gx0+3,gy0-4,10,INK,'left','Georgia,serif');txt(c,'t (s)',gx1,GY(0)+12,10,INK,'right','Georgia,serif');
+    pLine(c,GX(0),GY(cp.x),GX(T),GY(cp.x),{col:HZ,lw:2.8});pLine(c,GX(0),GY(cp.y),GX(T),GY(-cp.y),{col:VT,lw:2.8});
+    vt(c,'v','x',GX(T)-4,GY(cp.x)-6,13,HZ,'right');vt(c,'v','y',GX(T)-4,GY(-cp.y)-8,13,VT,'right');
+    txt(c,f(cp.x),gx0-3,GY(cp.x)+4,9,HZ,'right','Georgia,serif');txt(c,f(cp.y),gx0-3,GY(cp.y)+4,9,VT,'right','Georgia,serif');
+    pLine(c,GX(t),gy0,GX(t),gy1,{dash:[4,3],lw:1,passes:1});pCircle(c,GX(t),GY(cp.x),4,{col:HZ,lw:2});pCircle(c,GX(t),GY(P.vy(cp.y,t)),4,{col:VT,lw:2});
+    // lentorata (oikea osa)
+    const ox=gw+6,w2=w-ox,H=P.height(cp.y),R=P.range(cp.x,T),xmax=nice(R*1.08),ymax=nice(H*1.3);
+    const V=view(w2,h,0,xmax,ymax,10,10,12,28);const X=x=>ox+V.X(x),Y=V.Y;
+    c.save();c.translate(ox,0);ground(c,V,0,xmax,xmax<=30?5:xmax<=60?10:xmax<=120?20:50);c.restore();
+    pLine(c,ox-3,8,ox-3,h-8,{lw:1,a:.35,passes:1,dash:[3,5]});
+    const pts=[];for(let i=0;i<=60;i++){const tt=T*i/60;pts.push([X(P.x(cp.x,tt)),Y(Math.max(0,P.y(cp.y,tt)))])}
+    dots(c,pts,8,1.8,ACC);
+    const bx=X(P.x(cp.x,t)),by=Y(Math.max(0,P.y(cp.y,t))),r=Math.max(5,Math.min(8,w/55));
+    const k=Math.min(3.4,h*.011),vyv=P.vy(cp.y,t),ex=cp.x*k,ey=vyv*k;
+    pArrow(c,bx,by-r,bx+ex,by-r,HZ,3);pArrow(c,bx,by-r,bx,by-r-ey,VT,3);pArrow(c,bx,by-r,bx+ex,by-r-ey,INK,1.6);
+    ball(c,bx,by-r,r,ACC);
+    vt(c,'v','x',bx+ex+3,by-r+15,13,HZ,'left');vt(c,'v','y',bx+6,by-r-ey/2,13,VT,'left');
+  }}})();
+
+/* ---------- 4: Korkeus ja kantama ---------- */
+labs[3]=(()=>{
+  const st={v:20,a:45,st:[],t:0,play:false};
+  const COL=['#2f6db5','#c0504d','#3d8c4f','#8a5cc0'];
+  const calc=(v,a)=>{const cp=P.comp(v,a),T=P.flight(cp.y);return{vx:cp.x,vy:cp.y,T,H:P.height(cp.y),R:P.range(cp.x,T)}};
+  return{st,calc,
+  rd:()=>eq('e1')+eq('e2')+eq('e3')+eq('e4'),
+  ctrl:()=>sl('v','Alkunopeus '+v0,5,40,1,20,'m/s')+sl('a','Kulma θ',5,85,1,45,'°')+`<div class="btns">${btn('go','▶ Ammu','pri')}${btn('stamp','＋ Jätä jälki')}${btn('clr','Tyhjennä jäljet')}</div>`,
+  onchange(){st.play=false;st.t=0},
+  act(a){const q=calc(st.v,st.a);if(a==='go'){st.t=0;st.play=true}if(a==='stamp'&&st.st.length<4){st.st.push({v:st.v,a:st.a})}if(a==='clr')st.st=[]},
+  tick(dt){if(!st.play)return false;const q=calc(st.v,st.a);st.t=Math.min(q.T,st.t+dt*1.1);if(st.t>=q.T){st.play=false}return true},
+  upd(){const q=calc(st.v,st.a);
+    setE(3,'e1',`${vx} = ${st.v}·cos ${st.a}° = <b>${f(q.vx)} m/s</b> &nbsp;·&nbsp; ${v0y} = ${st.v}·sin ${st.a}° = <b>${f(q.vy)} m/s</b>`);
+    setE(3,'e2',`Lentoaika: <i>T</i> = 2${v0y} / <i>g</i> = 2·${f(q.vy)} / 9,8 ≈ <b>${f(q.T,2)} s</b>`);
+    setE(3,'e3',`Suurin korkeus: <i>H</i> = ${v0y}² / (2<i>g</i>) = ${f(q.vy)}² / 19,6 ≈ <b>${f(q.H)} m</b>`);
+    setE(3,'e4',`Kantama: <i>R</i> = ${vx} · <i>T</i> = ${f(q.vx)} · ${f(q.T,2)} ≈ <b>${f(q.R)} m</b>`)},
+  draw(c,w,h){const q=calc(st.v,st.a);let mR=q.R,mH=q.H;st.st.forEach(s=>{const z=calc(s.v,s.a);mR=Math.max(mR,z.R);mH=Math.max(mH,z.H)});
+    const xmax=nice(mR*1.08),ymax=nice(mH*1.4),V=view(w,h,0,xmax,ymax,14,14,12,28);SEED=41;
+    ground(c,V,0,xmax,xmax<=30?5:xmax<=60?10:xmax<=120?20:50);
+    st.st.forEach((s,i)=>{const z=calc(s.v,s.a);pPoly(c,trajPts(V,z.vx,z.vy,z.T),{col:COL[i],lw:1.8,a:.8,dash:[6,4],passes:1});
+      txt(c,s.a+'° · '+f(z.R)+' m',V.X(z.R)-4,V.Y(0)-8-i*0,11,COL[i],'right','Georgia,serif')});
+    const pts=trajPts(V,q.vx,q.vy,q.T,0,80);pPoly(c,pts,{col:ACC,lw:2.4,a:.95});
+    // huippu
+    const ax=V.X(q.vx*q.T/2),ay=V.Y(q.H);pLine(c,ax,ay,ax,V.Y(0),{dash:[4,4],lw:1.2,passes:1});
+    pArrow(c,ax-9,V.Y(0)-3,ax-9,ay+2,INK,1.3);pArrow(c,ax-9,ay+2,ax-9,V.Y(0)-3,INK,1.3);
+    txt(c,'H = '+f(q.H)+' m',ax-15,(ay+V.Y(0))/2,13,INK,'right');pCircle(c,ax,ay,4,{col:ACC,lw:2});
+    const ry=V.Y(0)-12;pArrow(c,V.X(0),ry,V.X(q.R),ry,INK,1.3);pArrow(c,V.X(q.R),ry,V.X(0),ry,INK,1.3);
+    txt(c,'R = '+f(q.R)+' m',ax+(V.X(q.R)-ax)*.5,ry-5,13,INK,'center');
+    // kulma
+    c.save();c.strokeStyle=INK;c.lineWidth=1.2;c.beginPath();c.arc(V.X(0),V.Y(0),26,-st.a*D,0);c.stroke();c.restore();txt(c,st.a+'°',V.X(0)+30,V.Y(0)-14-Math.sin(st.a*D)*6,12,INK);
+    if(st.t>0||st.play){const t=st.t,r=Math.max(5,Math.min(8,w/50)),bx=V.X(q.vx*t),by=V.Y(Math.max(0,P.y(q.vy,t)))-r;ball(c,bx,by,r,ACC)}
+  }}})();
+
+/* ---------- 5: Haaste ---------- */
+labs[4]=(()=>{
+  const st={v:20,a:45,round:1,score:0,stars:0,target:50,phase:'aim',t:0,hint:false,hintUsed:0,last:null,msg:'',res:[]};
+  const newT=()=>{st.target=30+Math.round(Math.random()*45)};
+  const stars=e=>e<=1?3:e<=3?2:e<=6?1:0;
+  const pts=s=>s*10;
+  newT();
+  return{st,newT,stars,
+  rd:()=>eq('e1')+eq('msg')+`<div class="chips">${chip('rd','kierros')}${chip('sc','pisteet')}${chip('st','tähdet')}${chip('tg','maali')}</div>`,
+  ctrl:()=>sl('v','Alkunopeus '+v0,10,30,.5,20,'m/s')+sl('a','Kulma θ',20,80,1,45,'°')+`<div class="btns">${btn('main','▶ Ammu!','pri')}${btn('hint','Vihje (−5 p)')}</div>`,
+  act(a){
+    if(a==='hint'&&st.phase==='aim'){st.hint=true;return}
+    if(a!=='main')return;
+    if(st.phase==='aim'){const cp=P.comp(st.v,st.a),T=P.flight(cp.y),R=P.range(cp.x,T);st.shot={vx:cp.x,vy:cp.y,T,R};st.t=0;st.phase='fly'}
+    else if(st.phase==='res'){if(st.round<5){st.round++;newT();st.phase='aim';st.hint=false;st.last=null;st.msg=''}else{st.phase='end'}}
+    else if(st.phase==='end'){Object.assign(st,{round:1,score:0,stars:0,phase:'aim',hint:false,last:null,msg:'',res:[]});newT()}
+  },
+  tick(dt){if(st.phase!=='fly')return false;st.t=Math.min(st.shot.T,st.t+dt*1.3);
+    if(st.t>=st.shot.T){const err=Math.abs(st.shot.R-st.target),s=stars(err);let p=pts(s);if(st.hint)p=Math.max(0,p-5);
+      st.score+=p;st.stars+=s;st.last={R:st.shot.R,err,s,p};st.phase='res';st.res.push(s);
+      st.msg=`Kantama R = ${f(st.shot.R)} m – ${f(err)} m ${st.shot.R>st.target?'yli':'vajaaksi'}. ${'★'.repeat(s)}${'☆'.repeat(3-s)} +${p} p`}
+    return true},
+  upd(){const pg=PR[4],cp=P.comp(st.v,st.a);
+    setE(4,'e1',`${vx} = <b>${f(cp.x)} m/s</b> &nbsp;·&nbsp; ${v0y} = <b>${f(cp.y)} m/s</b>${st.hint?` &nbsp;·&nbsp; <i>T</i> = ${f(P.flight(cp.y),2)} s, <i>R</i> = <b>${f(P.range(cp.x,P.flight(cp.y)))} m</b>`:''}`);
+    setE(4,'msg',st.phase==='end'?`<b>Peli ohi!</b> Pisteet ${st.score} / 150, tähdet ${st.stars} / 15. ${st.stars>=12?'Mahtavaa!':st.stars>=7?'Hyvin ammuttu!':'Kokeile uudelleen!'}`:st.msg||`Kierros ${st.round}/5: maali on ${st.target} m päässä. Laske, mitä nopeutta ja kulmaa tarvitaan.`);
+    setE(4,'rd',st.round+' / 5');setE(4,'sc',st.score+' p');setE(4,'st',st.stars+' ★');setE(4,'tg',st.target+' m');
+    const b=$('[data-a=main]',pg);b.textContent=st.phase==='aim'?'▶ Ammu!':st.phase==='fly'?'…lentää':st.phase==='res'?(st.round<5?'Seuraava kierros ▶':'Näytä tulos'):'↺ Pelaa uudelleen';b.disabled=st.phase==='fly';
+    $('[data-a=hint]',pg).disabled=st.phase!=='aim'||st.hint;$$('input[data-k]',pg).forEach(i=>i.disabled=st.phase!=='aim')},
+  draw(c,w,h){const V=view(w,h,-4,98,50,12,12,12,28);SEED=51;ground(c,V,-4,98,10);const gy=V.Y(0),tg=st.target;
+    // maalialueet
+    [[6,'#d9a441'],[3,'#8fbf5a'],[1,'#3d8c4f']].forEach(([d,col])=>{c.fillStyle=rgba(col,.35);c.fillRect(V.X(tg-d),gy-5,V.X(tg+d)-V.X(tg-d),5)});
+    pLine(c,V.X(tg),gy,V.X(tg),gy-V.s*9,{lw:2});pPoly(c,[[V.X(tg),gy-V.s*9],[V.X(tg)+V.s*4.5,gy-V.s*7.4],[V.X(tg),gy-V.s*5.8]],{lw:1.6,col:VT});
+    c.fillStyle=rgba(VT,.5);c.beginPath();c.moveTo(V.X(tg),gy-V.s*9);c.lineTo(V.X(tg)+V.s*4.5,gy-V.s*7.4);c.lineTo(V.X(tg),gy-V.s*5.8);c.fill();
+    txt(c,tg+' m',V.X(tg),gy-V.s*10.5,13,INK,'center','Georgia,serif');
+    // tykki
+    const L=clamp(st.v*V.s*.45,18,V.s*20);pLine(c,V.X(0),gy-6,V.X(0)+Math.cos(st.a*D)*L,gy-6-Math.sin(st.a*D)*L,{lw:9,col:INK,a:.45,passes:1,j:.3});
+    pCircle(c,V.X(0),gy-7,9,{col:INK,lw:2});
+    if(st.phase==='aim'||st.phase==='fly'){pArrow(c,V.X(0)+4,gy-6,V.X(0)+4+Math.cos(st.a*D)*(L+16),gy-6-Math.sin(st.a*D)*(L+16),ACC,1.6)}
+    if(st.shot&&(st.phase==='fly'||st.phase==='res'||st.phase==='end')){const sh=st.shot,tt=st.phase==='fly'?st.t:sh.T;
+      const p=[];for(let i=0;i<=80;i++){const t=tt*i/80;p.push([V.X(sh.vx*t),V.Y(Math.max(0,P.y(sh.vy,t)))])}dots(c,p,8,1.8,ACC);
+      if(st.phase==='fly'){const r=7;ball(c,V.X(sh.vx*tt),V.Y(Math.max(0,P.y(sh.vy,tt)))-r,r,ACC)}
+      else{const lx=V.X(sh.R);pLine(c,lx-7,gy-7,lx+7,gy+7,{col:ACC,lw:2.6});pLine(c,lx-7,gy+7,lx+7,gy-7,{col:ACC,lw:2.6});
+        if(st.last)txt(c,'★'.repeat(st.last.s)+'☆'.repeat(3-st.last.s),clamp(lx,40,w-40),gy-V.s*13,22,'#d9a441','center','Georgia,serif')}}
+  }}})();
+
+/* ================= SIVUJEN RAKENNE ================= */
+const pagesEl=$('#pages'),book=$('#book'),app=$('#app'),areaEl=$('#area');
+const PL=[],PR=[];
+function el(h,cls,ch){const d=document.createElement('section');d.className=cls;d.style.setProperty('--c',CH[ch].c);d.style.setProperty('--cs',CH[ch].cs);d.innerHTML=h;return d}
+CH.forEach((ch,i)=>{
+  PL.push(el(`<div class="pi">${LEFT[i]}<div class="foot">Luku ${i+1} / 5 · selitys</div></div>`,'page l',i));
+  const lab=labs[i];
+  PR.push(el(`<div class="pi">
+    <div class="lh"><span class="tag">Luku ${i+1}</span><h3>Laboratorio</h3></div>
+    <div class="pred"><div class="pq"><b>Ennusta:</b> ${PRED[i].q}</div>
+      <div class="opts">${PRED[i].o.map((o,k)=>`<button class="opt" data-i="${k}">${o}</button>`).join('')}</div>
+      <div class="reveal"><div class="ans"></div><div class="flap dis" tabindex="0" role="button" aria-label="Nosta paperilappu nähdäksesi vastauksen"><span>Valitse ennuste ensin</span></div></div></div>
+    <div class="popup"><div class="floor">
+      <div class="pn back"><canvas class="cb"></canvas></div>
+      <div class="pn main"><canvas class="cm"></canvas></div>
+      <div class="pn front"><canvas class="cf"></canvas></div></div></div>
+    <div class="rd">${lab.rd()}</div>
+    <div class="ctrls locked">${lab.ctrl()}<div class="lockmsg">✎ Ennusta ensin – sitten säädä!</div></div>
+  </div>`,'page r lab',i));
+  PR[i]._o=0;PR[i]._open=false;
+});
+PL.forEach(p=>pagesEl.appendChild(p));PR.forEach(p=>pagesEl.appendChild(p));
+
+/* ---- ennusta ja paljasta ---- */
+function wirePred(i){
+  const pg=PR[i],opts=$$('.opt',pg),flap=$('.flap',pg),ans=$('.ans',pg),P0=PRED[i],S={ch:-1,lift:0,drag:null};
+  const setLift=v=>{S.lift=v;flap.style.setProperty('--lift',v)};
+  const reveal=()=>{const ok=S.ch===P0.a;ans.innerHTML=`<span class="vd">${ok?'✓ Ennustit oikein!':'✗ Ei aivan – katso kokeesta, miksi.'}</span>${P0.e.replace(/vₓ/g,'v<sub>x</sub>').replace(/v₀y/g,'v<sub>0y</sub>').replace(/v₀/g,'v<sub>0</sub>')}`;};
+  opts.forEach((b,k)=>b.addEventListener('click',()=>{S.ch=k;opts.forEach((x,j)=>x.classList.toggle('sel',j===k));$('.ctrls',pg).classList.remove('locked');flap.classList.remove('dis');$('span',flap).textContent='Nosta lappu ↑ ja tarkista';if(S.lift>0){reveal()}}));
+  const toggle=()=>{if(S.ch<0){flap.classList.remove('shake');void flap.offsetWidth;flap.classList.add('shake');return}
+    if(S.lift<50){reveal();setLift(105);sfx('paper')}else setLift(0)};
+  flap.addEventListener('click',e=>{if(S.drag&&S.drag.moved)return;toggle()});
+  flap.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();toggle()}});
+  $('.reveal',pg).addEventListener('click',e=>{if(S.lift>50&&e.target!==flap)setLift(0)});
+  flap.addEventListener('pointerdown',e=>{if(S.ch<0)return;S.drag={y:e.clientY,moved:false,id:e.pointerId};flap.setPointerCapture(e.pointerId);flap.classList.add('drag')});
+  flap.addEventListener('pointermove',e=>{const d=S.drag;if(!d)return;const dy=d.y-e.clientY;if(Math.abs(dy)>4)d.moved=true;if(d.moved){if(dy>0)reveal();setLift(clamp(dy*2.2,0,110))}});
+  const end=()=>{const d=S.drag;if(!d)return;flap.classList.remove('drag');if(d.moved){if(S.lift>45){setLift(105);sfx('paper')}else setLift(0)}setTimeout(()=>S.drag=null,0)};
+  flap.addEventListener('pointerup',end);flap.addEventListener('pointercancel',end);
+  pg._pred=S;
+}
+function syncOut(i){const pg=PR[i],st=labs[i].st;$$('input[data-k]',pg).forEach(inp=>{const k=inp.dataset.k;if(+inp.value!==+st[k])inp.value=st[k]});
+  $$('output[data-o]',pg).forEach(o=>{const k=o.dataset.o;o.textContent=f(st[k],+o.dataset.d)+' '+o.dataset.u})}
+function wireLab(i){const pg=PR[i],lab=labs[i];
+  $$('input[data-k]',pg).forEach(inp=>inp.addEventListener('input',()=>{lab.st[inp.dataset.k]=+inp.value;lab.onchange&&lab.onchange(inp.dataset.k);syncOut(i);lab.upd();dirty[i]=1}));
+  $$('[data-a]',pg).forEach(b=>b.addEventListener('click',()=>{lab.act(b.dataset.a);syncOut(i);lab.upd();dirty[i]=1}));
+  syncOut(i);lab.upd()}
+for(let i=0;i<5;i++){wirePred(i);wireLab(i)}
+
+/* ---- piirto ---- */
+function readColors(i){const cs=getComputedStyle(document.documentElement);INK=cs.getPropertyValue('--ink').trim()||INK;PAPER=cs.getPropertyValue('--pp').trim()||PAPER;ACC=CH[i].c}
+function scenery(c,w,h,i){c.clearRect(0,0,w,h);SEED=60+i;const g=c.createLinearGradient(0,0,0,h);g.addColorStop(0,rgba(CH[i].c,.3));g.addColorStop(1,rgba(CH[i].c,.04));c.fillStyle=g;c.fillRect(0,0,w,h);
+  for(let L=0;L<3;L++){const pts=[];for(let k=0;k<=14;k++){const x=w*k/14;pts.push([x,h*(.55+L*.13)+Math.sin(k*.7+i*1.3+L*2)*h*.07+Math.sin(k*1.9+L)*h*.025])}
+    c.beginPath();c.moveTo(0,h);pts.forEach(p=>c.lineTo(p[0],p[1]));c.lineTo(w,h);c.closePath();c.fillStyle=rgba(CH[i].c,.1+L*.07);c.fill();pPoly(c,pts,{lw:1.4,a:.6,j:.8});
+    for(let y=h*(.6+L*.13);y<h;y+=8)pLine(c,0,y,w,y-10,{lw:.7,a:.1,passes:1,j:.2})}
+  pCircle(c,w*.82,h*.2,h*.09,{lw:1.6,a:.7});for(let k=0;k<10;k++){const a=k/10*Math.PI*2;pLine(c,w*.82+Math.cos(a)*h*.12,h*.2+Math.sin(a)*h*.12,w*.82+Math.cos(a)*h*.17,h*.2+Math.sin(a)*h*.17,{lw:1,a:.5,passes:1})}
+  [[.2,.22],[.5,.14]].forEach(([x,y])=>{[0,1,2].forEach(k=>pCircle(c,w*x+k*h*.07,h*y-(k===1?h*.03:0),h*(k===1?.065:.05),{lw:1.2,a:.55,passes:1}))})}
+function front(c,w,h){c.clearRect(0,0,w,h);SEED=77;c.fillStyle=rgba('#4f9a55',.35);c.fillRect(0,h*.45,w,h*.55);pLine(c,0,h*.45,w,h*.45,{lw:1.6,a:.7});
+  for(let x=6;x<w;x+=11){const y=h*.45;pLine(c,x,y,x-3,y-h*.16-jr(x)*h*.1,{lw:1.2,a:.6,passes:1,col:'#3d7a42'});pLine(c,x,y,x+4,y-h*.14-jr(x+9)*h*.08,{lw:1.2,a:.6,passes:1,col:'#3d7a42'})}}
+function drawLab(i){const pg=PR[i];readColors(i);const cm=fit($('.cm',pg));if(!cm)return;SEED=1;cm.c.clearRect(0,0,cm.w,cm.h);labs[i].draw(cm.c,cm.w,cm.h);
+  const key=cm.w+'x'+cm.h+INK;if(pg._sz!==key){pg._sz=key;const b=fit($('.cb',pg));if(b)scenery(b.c,b.w,b.h,i);const fr=fit($('.cf',pg));if(fr)front(fr.c,fr.w,fr.h)}}
+
+/* ---- pop-up avautuminen ---- */
+function setO(p,v){p._o=v;const fl=$('.floor',p);if(fl)fl.style.setProperty('--o',v)}
+function openAnim(p,instant){p._open=true;if(instant){setO(p,1);return}const t0=performance.now(),D0=1000;
+  (function s(now){if(!p._open)return;const k=Math.min(1,(now-t0)/D0);const e=1-Math.pow(1-k,3)+Math.sin(k*Math.PI)*.07*(1-k)*3;setO(p,Math.max(0,e));if(k<1)requestAnimationFrame(s);else setO(p,1)})(t0)}
+
+/* ================= ÄÄNI ================= */
+let AC=null,muted=false;
+function sfx(kind){if(muted)return;try{AC=AC||new(window.AudioContext||window.webkitAudioContext)();if(AC.state==='suspended')AC.resume();
+  const dur=kind==='paper'?.22:.75,n=Math.floor(AC.sampleRate*dur),b=AC.createBuffer(1,n,AC.sampleRate),d=b.getChannelData(0);let lp=0;
+  for(let i=0;i<n;i++){const t=i/n;const env=Math.pow(Math.sin(Math.PI*Math.min(1,t)),1.4)*(kind==='paper'?1:(.7+.3*Math.sin(t*14)));lp+=((Math.random()*2-1)-lp)*.35;d[i]=lp*env}
+  const s=AC.createBufferSource();s.buffer=b;const fl=AC.createBiquadFilter();fl.type='bandpass';fl.Q.value=.6;const now=AC.currentTime;fl.frequency.setValueAtTime(700,now);fl.frequency.linearRampToValueAtTime(2200,now+dur*.5);fl.frequency.linearRampToValueAtTime(900,now+dur);
+  const g=AC.createGain();g.gain.value=kind==='paper'?.22:.3;s.connect(fl);fl.connect(g);g.connect(AC.destination);s.start()}catch(e){}}
+const ICON_ON='<svg viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></svg>';
+const ICON_OFF='<svg viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M17 9l5 6M22 9l-5 6"/></svg>';
+const bMute=$('#bMute');bMute.innerHTML=ICON_ON;
+bMute.onclick=()=>{muted=!muted;bMute.innerHTML=muted?ICON_OFF:ICON_ON;bMute.setAttribute('aria-pressed',muted);bMute.setAttribute('aria-label',muted?'Äänet päälle':'Mykistä äänet')};
+
+/* ================= NAVIGOINTI / ASETTELU ================= */
+let chap=0,side=0,busy=false,fl=null;
+const isDouble=()=>pagesEl.classList.contains('double'),isTeach=()=>app.classList.contains('teach');
+const unitCount=()=>isDouble()||isTeach()?5:10;
+const curUnit=()=>isDouble()||isTeach()?chap:chap*2+side;
+function setUnit(u){if(isDouble()||isTeach())chap=u;else{chap=u>>1;side=u&1}}
+function pageOf(u){if(isDouble())return[PL[u],PR[u]];if(isTeach())return[PR[u]];return[u&1?PR[u>>1]:PL[u>>1]]}
+function render(instant){
+  const on=new Set(pageOf(curUnit()));[...PL,...PR].forEach(p=>p.classList.toggle('on',on.has(p)));
+  PR.forEach((p,i)=>{if(on.has(p)){if(!p._open)openAnim(p,instant);dirty[i]=1}else{p._open=false;setO(p,0)}});
+  $$('.dot').forEach((d,i)=>{d.classList.toggle('act',i===chap);d.setAttribute('aria-current',i===chap)});
+  $('#bPrev').disabled=curUnit()<=0;$('#bNext').disabled=curUnit()>=unitCount()-1;
+  const w=book.clientWidth;const base=Math.max(3,w*.004);book.style.setProperty('--tl',(base+chap*base*1.6)+'px');book.style.setProperty('--tr',(base+(4-chap)*base*1.6)+'px');
+  document.documentElement.style.setProperty('--c',CH[chap].c)}
+function layout(){
+  const a=areaEl.getBoundingClientRect(),teach=isTeach();
+  const dbl=a.width>=760&&a.width/a.height>=1.15&&a.height>=360;
+  const isD=dbl&&!teach;
+  const was=isDouble();pagesEl.className='pages '+(isD?'double':'single');book.classList.toggle('sg',!isD);
+  let bw,bh;
+  if(dbl){bh=a.height-34;bw=bh*1.5;if(bw>a.width-34){bw=a.width-34;bh=bw/1.5}}
+  else{bh=a.height-22;bw=Math.min(a.width-22,bh*2.3);if(bw<=0)bw=a.width-22}
+  const wide=bw/bh>1.25&&!isD;book.classList.toggle('wide',wide);
+  const pw=isD?bw/2:bw;let fs=wide?Math.min(pw/38,bh/29):Math.min(pw/26,bh/(isD?44:39));fs=clamp(fs,9.5,21)*(teach?1.07:1);
+  book.style.setProperty('--bw',bw+'px');book.style.setProperty('--bh',bh+'px');book.style.setProperty('--fs',fs+'px');
+  if(was!==isD){if(isD)side=0;}
+  if(teach)side=1;
+  render(true);PR.forEach((p,i)=>{p._sz='';dirty[i]=1})}
+
+/* ---- kääntyvä sivu ---- */
+function snap(page){const cl=page.cloneNode(true);cl.classList.add('on','snap');cl.style.width=page.offsetWidth+'px';cl.style.height=page.offsetHeight+'px';
+  const sc=page.querySelectorAll('canvas'),dc=cl.querySelectorAll('canvas');sc.forEach((s,i)=>{const d=dc[i];d.width=s.width;d.height=s.height;try{d.getContext('2d').drawImage(s,0,0)}catch(e){}});
+  const si=page.querySelectorAll('input'),di=cl.querySelectorAll('input');si.forEach((s,i)=>{di[i].value=s.value});
+  cl.querySelectorAll('[id]').forEach(e=>e.removeAttribute('id'));return cl}
+function dup(n){const cl=n.cloneNode(true);const a=n.querySelectorAll('canvas'),b=cl.querySelectorAll('canvas');a.forEach((s,i)=>{b[i].width=s.width;b[i].height=s.height;try{b[i].getContext('2d').drawImage(s,0,0)}catch(e){}});return cl}
+function prepSnap(page,labIdx){ // varmista asettelu ja piirto ennen kuvaa
+  const wasOn=page.classList.contains('on'),o=page._o;page.classList.add('on');if(labIdx>=0){setO(page,1);drawLab(labIdx)}
+  return()=>{if(!wasOn)page.classList.remove('on');if(labIdx>=0)setO(page,o)}}
+function startFlip(dir){
+  if(busy&&!fl)return null;const u=curUnit(),F=dir>0?u:u-1,T=F+1;if(F<0||T>=unitCount())return null;
+  const type=isDouble()?'double':'single',bw=book.clientWidth,bh=book.clientHeight,rect=type==='double'?{x:bw/2,y:0,w:bw/2,h:bh}:{x:0,y:0,w:bw,h:bh};
+  let fnode,bnode;const restore=[];
+  if(type==='double'){restore.push(prepSnap(PR[F],F));fnode=snap(PR[F]);restore.push(prepSnap(PL[T],-1));bnode=snap(PL[T])}
+  else{const pf=pageOf(F)[0],isLab=PR.indexOf(pf);restore.push(prepSnap(pf,isLab));fnode=snap(pf)}
+  restore.reverse().forEach(r=>r());
+  // alla näkyvät sivut
+  if(type==='double'){PL.forEach(p=>p.classList.remove('on'));PR.forEach(p=>p.classList.remove('on'));PL[F].classList.add('on');PR[T].classList.add('on');if(dir>0){PR[T]._open=false;setO(PR[T],0)}else{PR[T]._open=true;setO(PR[T],1)}}
+  else{[...PL,...PR].forEach(p=>p.classList.remove('on'));const pt=pageOf(T)[0];pt.classList.add('on');const li=PR.indexOf(pt);if(li>=0){if(dir>0){pt._open=false;setO(pt,0)}else{pt._open=true;setO(pt,1)}}}
+  // lehti
+  const N=14,sw=rect.w/N,leaf=document.createElement('div');leaf.className='leaf';Object.assign(leaf.style,{left:rect.x+'px',top:rect.y+'px',width:rect.w+'px',height:rect.h+'px'});
+  const strips=[];let parent=leaf;
+  for(let i=0;i<N;i++){const s=document.createElement('div');s.className='strip';s.style.left=(i?sw:0)+'px';s.style.width=(sw+.5)+'px';
+    const fa=document.createElement('div');fa.className='face fa';const sc=document.createElement('div');sc.className='sc';sc.style.left=(-i*sw)+'px';sc.appendChild(i?dup(fnode):fnode);fa.appendChild(sc);const sd=document.createElement('div');sd.className='sd';fa.appendChild(sd);s.appendChild(fa);
+    let fb=null,sdb=null;if(type==='double'){fb=document.createElement('div');fb.className='face fb';const sc2=document.createElement('div');sc2.className='sc';sc2.style.left=(-(rect.w-(i+1)*sw))+'px';sc2.appendChild(i?dup(bnode):bnode);fb.appendChild(sc2);sdb=document.createElement('div');sdb.className='sd';fb.appendChild(sdb);s.appendChild(fb)}
+    parent.appendChild(s);parent=s;strips.push({s,sd,sdb})}
+  const mk=side=>{const d=document.createElement('div');d.className='lsh';d.style.background=`linear-gradient(${side?90:270}deg,rgba(30,15,0,.5),transparent)`;return d};
+  const shR=mk(1),shL=mk(0);
+  const rx=type==='double'?rect.x:0,rw=rect.w;Object.assign(shR.style,{left:rx+'px',width:rw*.5+'px'});
+  if(type==='double'){Object.assign(shL.style,{left:'0',width:rw*.5+'px'})}
+  book.appendChild(shR);if(type==='double')book.appendChild(shL);book.appendChild(leaf);
+  fl={dir,F,T,type,rect,leaf,strips,N,shR,shL,p:0,pop:false};busy=true;setQ(dir>0?0:1);return fl}
+function setQ(q){q=clamp(q,0,1);const {type,strips,N}=fl,dbl=type==='double',amax=dbl?-180:90,A=amax*q,sg=Math.sign(amax);
+  const lag=(dbl?32:20)*Math.sin(2*Math.PI*q),per=lag/N;
+  strips.forEach((o,i)=>{o.s.style.transform=`rotateY(${i?-sg*per:A}deg)`;const a=A-sg*per*i,sa=Math.abs(Math.sin(a*D));
+    o.sd.style.opacity=(.1+.5*sa).toFixed(3);if(o.sdb)o.sdb.style.opacity=(.5*sa).toFixed(3)});
+  const sh=Math.sin(Math.PI*q);fl.shR.style.opacity=(.5*sh*(q<.5?1:.3)).toFixed(3);if(dbl)fl.shL.style.opacity=(.5*sh*(q>.5?1:.3)).toFixed(3);
+  if(fl.dir>0&&!fl.pop&&q>.42){const pg=dbl?PR[fl.T]:pageOf(fl.T)[0];if(PR.includes(pg)){fl.pop=true;openAnim(pg)}}}
+function applyP(p){fl.p=p;setQ(fl.dir>0?p:1-p)}
+function animateFlip(from,to,ms,done){const t0=performance.now();(function s(now){const k=Math.min(1,(now-t0)/ms),e=k<.5?4*k*k*k:1-Math.pow(-2*k+2,3)/2;applyP(from+(to-from)*e);if(k<1)requestAnimationFrame(s);else done()})(t0)}
+function finish(complete){const {dir,F,T,leaf,shR,shL}=fl;leaf.remove();shR.remove();shL.remove();
+  const keepPop=fl.pop;fl=null;busy=false;
+  if(complete){setUnit(dir>0?T:F)}
+  render(complete&&dir<0);
+  // varmista että kaikki näkyvät lab-sivut piirtyvät
+  dirty.fill(1)}
+function go(dir){if(busy)return;const f0=startFlip(dir);if(!f0)return;sfx('flip');animateFlip(0,1,950,()=>finish(true))}
+function jump(u){if(busy)return;const c0=curUnit();if(u===c0)return;if(Math.abs(u-c0)===1)return go(u>c0?1:-1);sfx('flip');setUnit(u);render()}
+$('#bNext').onclick=()=>go(1);$('#bPrev').onclick=()=>go(-1);
+CH.forEach((c,i)=>{const d=document.createElement('button');d.className='dot';d.style.setProperty('--c',c.c);d.textContent=i+1;d.setAttribute('aria-label','Luku '+(i+1)+': '+c.name);d.title=c.name;d.onclick=()=>jump(isDouble()||isTeach()?i:i*2);$('#dots').appendChild(d)});
+addEventListener('keydown',e=>{if(e.target.matches('input,textarea'))return;if(e.key==='ArrowRight'){go(1)}else if(e.key==='ArrowLeft'){go(-1)}});
+
+/* vetäminen */
+let drag=null;
+book.addEventListener('pointerdown',e=>{if(busy||(e.button&&e.button>0))return;if(e.target.closest('input,button,.flap,.opt,label'))return;drag={x:e.clientX,y:e.clientY,id:e.pointerId,on:false}});
+addEventListener('pointermove',e=>{if(!drag||e.pointerId!==drag.id)return;const dx=e.clientX-drag.x,dy=e.clientY-drag.y;
+  if(!drag.on){if(Math.abs(dx)>12&&Math.abs(dx)>Math.abs(dy)*1.2){const dir=dx<0?1:-1;if(!startFlip(dir)){drag=null;return}drag.on=true;drag.dir=dir;drag.x0=e.clientX;sfx('flip')}else return}
+  const span=fl.rect.w*.75;drag.p=clamp(-drag.dir*(e.clientX-drag.x0)/span,0,1);applyP(drag.p)});
+function dragEnd(e){if(!drag||(e&&e.pointerId!==drag.id))return;const d=drag;drag=null;if(!d.on)return;const comp=d.p>.3;animateFlip(d.p,comp?1:0,Math.max(250,(comp?1-d.p:d.p)*900),()=>finish(comp))}
+addEventListener('pointerup',dragEnd);addEventListener('pointercancel',dragEnd);
+
+/* opettajatila, teema */
+$('#bTeach').onclick=function(){if(busy)return;const on=!isTeach();app.classList.toggle('teach',on);this.setAttribute('aria-pressed',on);
+  if(on){side=1}layout()};
+let userTheme=null;const mq=matchMedia('(prefers-color-scheme: dark)');
+function applyTheme(t){document.documentElement.dataset.theme=t;dirty.fill(1);PR.forEach(p=>p._sz='')}
+applyTheme(mq.matches?'dark':'light');
+mq.addEventListener&&mq.addEventListener('change',e=>{if(!userTheme)applyTheme(e.matches?'dark':'light')});
+$('#bTheme').onclick=()=>{userTheme=document.documentElement.dataset.theme==='dark'?'light':'dark';applyTheme(userTheme)};
+
+/* ================= PÄÄSILMUKKA ================= */
+let lastTs=performance.now();
+function frame(ts){const dt=Math.min(.05,(ts-lastTs)/1000||0);lastTs=ts;
+  for(let i=0;i<5;i++){const pg=PR[i];if(!pg.classList.contains('on'))continue;const lb=labs[i];
+    if(lb.tick&&lb.tick(dt)){syncOut(i);lb.upd();dirty[i]=1}
+    const cm=$('.cm',pg);if(dirty[i]||pg._sz===''||(cm.clientWidth+'x'+cm.clientHeight)!==(pg._sz||'').split(/[^0-9x]/)[0]){drawLab(i);dirty[i]=0}}
+  requestAnimationFrame(frame)}
+let rz;addEventListener('resize',()=>{clearTimeout(rz);rz=setTimeout(()=>{if(!busy)layout()},60)});
+if(window.ResizeObserver)new ResizeObserver(()=>{clearTimeout(rz);rz=setTimeout(()=>{if(!busy)layout()},60)}).observe(areaEl);
+layout();requestAnimationFrame(frame);
+window.__api={P,labs,go,jump,layout,get state(){return{chap,side,busy,double:isDouble(),teach:isTeach()}},f};
+})();
+</script>
+</body>
+</html>
